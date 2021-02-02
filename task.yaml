@@ -1,0 +1,32 @@
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: run-resnet-server
+spec:
+  steps:
+    - name: resnet50
+      image: "quay.io/dfeddema/inference:latest"
+      securityContext:
+        runAsUser: 0
+      script: |
+        #!/usr/bin/env bash
+        echo $USER
+        cd /work/build/preprocessed_data
+        mkdir -p imagenet/ResNet50
+        cd imagenet/ResNet50
+        curl https://mlperf-inference.s3-us-west-2.amazonaws.com/mlperf-inference-preprocessed_imagenet-ResNet50-fp32.tar.gz -o fp32.tar.gz
+        tar -xzvf fp32.tar.gz  
+        rm fp32.tar.gz
+        curl https://mlperf-inference.s3-us-west-2.amazonaws.com/mlperf-inference-preprocessed_imagenet-ResNet50-int8_linear.tar.gz -o int8_linear.tar.gz 
+        tar -xzvf int8_linear.tar.gz
+        rm int8_linear.tar.gz
+        cd /work/measurements
+        curl https://mlperf-inference.s3-us-west-2.amazonaws.com/measurement_T4x1.tar.gz -o measurement_T4x1.tar.gz
+        tar -xzvf measurement_T4x1.tar.gz 
+        rm measurement_T4x1.tar.gz
+        cd /work/code/common
+        # add ("T4x1", "Tesla T4", 1), to /work/code/common/system_list.py
+        curl https://mlperf-inference.s3-us-west-2.amazonaws.com/system_list.py -o system_list.py
+        cd /work
+        make generate_engines RUN_ARGS="--benchmarks=resnet --scenarios=Server"
+        make run_harness RUN_ARGS="--benchmarks=resnet --scenarios=Server"
