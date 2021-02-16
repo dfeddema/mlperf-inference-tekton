@@ -1,7 +1,7 @@
 apiVersion: tekton.dev/v1beta1
 kind: Task
 metadata:
-  name: run-resnet-server
+  name: run-resnet-server-and-offline
 spec:
   steps:
     - name: resnet50
@@ -28,5 +28,9 @@ spec:
         # add ("T4x1", "Tesla T4", 1), to /work/code/common/system_list.py
         curl https://mlperf-inference.s3-us-west-2.amazonaws.com/system_list.py -o system_list.py
         cd /work
+        # run Offline Scenario
+        make generate_engines RUN_ARGS="--benchmarks=resnet --scenarios=Offline"
+        make run_harness RUN_ARGS="--benchmarks=resnet --scenarios=Offline --test_mode=PerformanceOnly"
+        # run Server Scenario
         make generate_engines RUN_ARGS="--benchmarks=resnet --scenarios=Server"
-        make run_harness RUN_ARGS="--benchmarks=resnet --scenarios=Server"
+        make run_harness RUN_ARGS="--benchmarks=resnet --scenarios=Server --test_mode=PerformanceOnly"
