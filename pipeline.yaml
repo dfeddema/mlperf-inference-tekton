@@ -4,6 +4,6 @@ metadata:
   name: mlperf-inference
 spec:
   tasks:
-    - name: resnet-val
+    - name: resnet-task
       taskRef:
-        name: run-resnet-server
+        name: run-resnet-server-and-offline
